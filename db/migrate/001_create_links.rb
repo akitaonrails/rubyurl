@@ -1,7 +1,7 @@
 class CreateLinks < ActiveRecord::Migration
   def self.up
     create_table :links do |t|
-      t.column "website_url", :text
+      t.column "website_url", :string
       t.column "token",       :string
       t.column "permalink",   :string
       t.column "ip_address",  :string

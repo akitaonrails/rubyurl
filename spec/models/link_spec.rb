@@ -69,7 +69,7 @@ describe Link, "a new link" do
   
   it "should be invalid without a website url" do
     @link.attributes = valid_attributes.except(:website_url)
-    @link.should have(1).error_on(:website_url)
+    @link.should have(2).error_on(:website_url)
   end
   
   it "should be invalid without an ip address" do
@@ -164,6 +164,6 @@ describe Link, 'to_api_json' do
   end
   
   it "should return the proper JSON" do
-    @link.to_api_json.should == '{"link": {"permalink": "' + @link.permalink + '", "website_url": "' + @link.website_url + '"}}'
+    @link.to_api_json.should == '{"link":{"permalink":"' + @link.permalink + '","website_url":"' + @link.website_url + '"}}'
   end
 end

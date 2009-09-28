@@ -63,6 +63,24 @@ class AdapterTest < ActiveRecord::TestCase
     def test_show_nonexistent_variable_returns_nil
       assert_nil @connection.show_variable('foo_bar_baz')
     end
+
+    def test_not_specifying_database_name_for_cross_database_selects
+      assert_nothing_raised do
+        ActiveRecord::Base.establish_connection({
+          :adapter  => 'mysql',
+          :username => 'rails'
+        })
+        ActiveRecord::Base.connection.execute "SELECT activerecord_unittest.pirates.*, activerecord_unittest2.courses.* FROM activerecord_unittest.pirates, activerecord_unittest2.courses"
+      end
+
+      ActiveRecord::Base.establish_connection 'arunit'
+    end
+  end
+
+  if current_adapter?(:PostgreSQLAdapter)
+    def test_encoding
+      assert_not_nil @connection.encoding
+    end
   end
 
   def test_table_alias
@@ -118,7 +136,7 @@ class AdapterTest < ActiveRecord::TestCase
     sql_inject = "1, 7 procedure help()"
     if current_adapter?(:MysqlAdapter)
       assert_equal " LIMIT 1,7", @connection.add_limit_offset!("", :limit=>sql_inject)
-      assert_equal " LIMIT 7, 1", @connection.add_limit_offset!("", :limit=>sql_inject, :offset=>7)
+      assert_equal " LIMIT 7, 1", @connection.add_limit_offset!("", :limit=> '1 ; DROP TABLE USERS', :offset=>7)
     else
       assert_equal " LIMIT 1,7", @connection.add_limit_offset!("", :limit=>sql_inject)
       assert_equal " LIMIT 1,7 OFFSET 7", @connection.add_limit_offset!("", :limit=>sql_inject, :offset=>7)

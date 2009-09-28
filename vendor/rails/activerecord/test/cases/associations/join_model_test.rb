@@ -317,11 +317,11 @@ class AssociationsJoinModelTest < ActiveRecord::TestCase
   end
 
   def test_belongs_to_polymorphic_with_counter_cache
-    assert_equal 0, posts(:welcome)[:taggings_count]
+    assert_equal 1, posts(:welcome)[:taggings_count]
     tagging = posts(:welcome).taggings.create(:tag => tags(:general))
-    assert_equal 1, posts(:welcome, :reload)[:taggings_count]
+    assert_equal 2, posts(:welcome, :reload)[:taggings_count]
     tagging.destroy
-    assert posts(:welcome, :reload)[:taggings_count].zero?
+    assert_equal 1, posts(:welcome, :reload)[:taggings_count]
   end
 
   def test_unavailable_through_reflection
@@ -377,7 +377,7 @@ class AssociationsJoinModelTest < ActiveRecord::TestCase
   end
 
   def test_has_many_through_polymorphic_has_one
-    assert_raise(ActiveRecord::HasManyThroughSourceAssociationMacroError) { authors(:david).tagging }
+    assert_equal Tagging.find(1,2).sort_by { |t| t.id }, authors(:david).tagging
   end
 
   def test_has_many_through_polymorphic_has_many
@@ -510,13 +510,11 @@ class AssociationsJoinModelTest < ActiveRecord::TestCase
     assert !author.comments.loaded?
   end
 
-  uses_mocha('has_many_through_collection_size_uses_counter_cache_if_it_exists') do
-    def test_has_many_through_collection_size_uses_counter_cache_if_it_exists
-      author = authors(:david)
-      author.stubs(:read_attribute).with('comments_count').returns(100)
-      assert_equal 100, author.comments.size
-      assert !author.comments.loaded?
-    end
+  def test_has_many_through_collection_size_uses_counter_cache_if_it_exists
+    author = authors(:david)
+    author.stubs(:read_attribute).with('comments_count').returns(100)
+    assert_equal 100, author.comments.size
+    assert !author.comments.loaded?
   end
 
   def test_adding_junk_to_has_many_through_should_raise_type_mismatch
@@ -692,6 +690,13 @@ class AssociationsJoinModelTest < ActiveRecord::TestCase
 
     assert ! david.categories.loaded?
     assert ! david.categories.include?(category)
+  end
+
+  def test_has_many_through_goes_through_all_sti_classes
+    sub_sti_post = SubStiPost.create!(:title => 'test', :body => 'test', :author_id => 1)
+    new_comment = sub_sti_post.comments.create(:body => 'test')
+
+    assert_equal [9, 10, new_comment.id], authors(:david).sti_post_comments.map(&:id).sort
   end
 
   private
