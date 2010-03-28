@@ -1,15 +1,30 @@
-class Link < ActiveRecord::Base
+class Link 
+  include DataMapper::Resource
+  
+  property :id,          Serial
+  property :website_url, String, :required => true, :length => (10..500)
+  property :token,       String
+  property :permalink,   String
+  property :ip_address,  String, :required => true
+  timestamps :at
+  
   TOKEN_LENGTH = 4
+  attr_accessor :http_host
   
-  has_many :visits
-  has_many :spam_visits, :class_name => 'Visit', :conditions => ["flagged = 'spam'"]
+  has n, :visits
+  has n, :spam_visits, :model => 'Visit', :flagged => 'spam'
   
-  validates_presence_of :website_url, :ip_address
-  validates_uniqueness_of :website_url, :token  
-  validates_format_of :website_url, :with => /^(http|https):\/\/[a-z0-9]/ix, :on => :save, :message => 'needs to have http(s):// in front of it', :if => Proc.new { |p| p.website_url? }
-  validates_length_of :website_url, :within => 10..500
+  validates_is_unique :website_url
+  validates_is_unique :token  
+  validates_format :website_url, :with => /^(http|https):\/\/[a-z0-9]/ix, :on => :save, :message => 'needs to have http(s):// in front of it', :if => Proc.new { |p| p.website_url? }
   
-  before_create :generate_token
+  before :create, :generate_token
+  
+  def self.find_or_create_by_website_url(website_url)
+    sites = Link.all(:website_url => website_url)
+    return sites.first unless sites.empty?
+    Link.create(:website_url => website_url)
+  end
   
   def flagged_as_spam?
     self.spam_visits.empty? ? false : true
@@ -37,7 +52,7 @@ class Link < ActiveRecord::Base
   private
   
     def generate_token
-      if (temp_token = random_token) and self.class.find_by_token(temp_token).nil?
+      if (temp_token = random_token) and self.class.all(:token => temp_token).empty?
         self.token = temp_token
         build_permalink
       else
@@ -46,7 +61,7 @@ class Link < ActiveRecord::Base
     end
     
     def build_permalink
-      self.permalink = DOMAIN_NAME + self.token
+      self.permalink = "http://#{http_host}/" + self.token
     end
   
     def random_token

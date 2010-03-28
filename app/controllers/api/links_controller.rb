@@ -6,6 +6,7 @@ class Api::LinksController < Api::BaseController
       website_url = params[:website_url]
     end
     @link = Link.find_or_create_by_website_url( website_url )
+    @link.http_host = request.env["HTTP_HOST"]
     @link.ip_address = request.remote_ip if @link.new_record?      
 
     if @link.save        

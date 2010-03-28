@@ -1,3 +1,26 @@
+== App Engine
+
+This app was converted to work under Google App Engine using @woodie's
+tutorial: http://gist.github.com/268192
+
+The ActiveRecord models were converted to DataMapper to work with Big Table,
+but the specs were not, so tests will fail. I also removed the rspec task
+because it loads whenever the Rails stack loads up and it breaks down in the
+App Engine.
+
+To bundle the required gems, execute:
+
+  appcfg.rb bundle --update .
+  
+Change the application id in 'config.ru' and 'WEB-INF/appengine-web.xml' to
+the name of the application you created (http://appengine.google.com/start/createapp?)
+
+To deploy, run:
+
+  ./script/publish.sh
+  
+That should do it!
+
 == RubyURL
 
 This project is the source code for the application that powers Rubyurl.com. 
@@ -16,3 +39,5 @@ Feel free to submit tickets to the Rubyurl ticket system.
 
 Robby Russell <robby@planetargon.com>
 Chris Griffin <chris@deadboltdesign.com>
+
+Fabio Akita <fabioakita@gmail.com> - Google App Engine conversion
